@@ -8,6 +8,11 @@
             "email": "yushkevichv@gmail.com"
         }
     ],
+    "require": {
+        "php": "^7.4",
+        "tecnickcom/tcpdf": "~6.0",
+        "ext-zlib": "*"
+    },
     "autoload": {
         "psr-4": {
             "Yushkevichv\\PDFCadReader\\": "src"
