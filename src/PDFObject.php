@@ -3,13 +3,13 @@
 
 namespace Yushkevichv\PDFCadReader;
 
-
 use Exception;
 
 class PDFObject
 {
     protected $objects = [];
     protected $index = [];
+    protected $streamData = [];
     protected $trailer;
 
     /**
@@ -18,6 +18,17 @@ class PDFObject
     public function getIndex(): array
     {
         return $this->index;
+    }
+
+    public function getStreamData() :array
+    {
+        $data =[];
+        $streamKeys = $this->index['mappers']['streams'];
+        foreach ($streamKeys as $key => $stream) {
+            $data[$key] = $this->getObjectById($stream)[1];
+        }
+
+        return $data;
     }
 
     /**
