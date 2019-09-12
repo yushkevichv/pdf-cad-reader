@@ -29,9 +29,11 @@ class PDFTrailer
         else {
             throw new \Exception('Invalid Trailer');
         }
+    }
 
-
-
+    public function getRoot() :ElementXRef
+    {
+        return $this->root;
     }
 
 }

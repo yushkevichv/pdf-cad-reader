@@ -43,6 +43,7 @@ class Parser
         }
         $pdfObject->setObjects($this->objects);
         $pdfObject->setTrailer($this->parseTrailer($xref['trailer']));
+        $pdfObject->buildIndex();
 
         return $pdfObject;
     }
