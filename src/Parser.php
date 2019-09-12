@@ -142,6 +142,8 @@ class Parser
                 return $this->parseStructureElement('(', Encoder::decodeHexa($value));
             case '/':
                 return ElementName::parse('/' . $value);
+            case 'null':
+                return null;
             case 'ojbref': // old mistake in tcpdf parser
             case 'objref':
                 return new ElementXRef($value);
@@ -180,12 +182,12 @@ class Parser
             if (is_numeric($values)) {
                 $trailer[$name] = $values;
             } elseif (is_array($values)) {
-                $value          = $this->parseTrailer($values);
-                $trailer[$name] = $value;
+//                $value[$name]          = $this->parseTrailer($values);
+//                $trailer[$name] = $value;
             } elseif (strpos($values, '_') !== false) {
                 $trailer[$name] = new ElementXRef($values);
             } else {
-                $trailer[$name] = $this->parseHeaderElement('(', $values);
+                $trailer[$name] = $this->parseStructureElement('(', $values);
             }
         }
 

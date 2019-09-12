@@ -4,6 +4,7 @@
 namespace Yushkevichv\PDFCadReader;
 
 use Exception;
+use Yushkevichv\PDFCadReader\PDFObjectElement\ElementXRef;
 
 class PDFObject
 {
@@ -80,15 +81,25 @@ class PDFObject
             throw new Exception('Multipage PDF not supported');
         }
 
-        $kids = $this->getObjectById((string) $pages['Kids'][0])[0];
+        $kids = $this->getKids((string) $pages['Kids'][0]);
 
         $this->index['info']['width'] = ($kids['MediaBox'][2] - $kids['MediaBox'][0]);
         $this->index['info']['height'] = ($kids['MediaBox'][3] - $kids['MediaBox'][1]);
         $this->index['info']['rotate'] = (int) $kids['Rotate'];
         $this->index['mappers']['layers'] = $this->getLayersMapper($kids['Resources']['Properties']);
-        $this->index['mappers']['streams'] = $this->getLayersMapper($kids['Contents']);
+        $this->index['mappers']['streams'] = array_values($this->getLayersMapper($kids['Contents']));
         $this->index['mappers']['fonts'] = $this->getFontMapper($kids['Resources']['Font']);
-        $this->index['layers'] = $this->getLayers($root['OCProperties']['D']['Order']);
+        $this->index['layers'] = $this->getLayers($root);
+    }
+
+    protected function getKids($key)
+    {
+        $kids = $this->getObjectById($key)[0];
+        if(isset($kids['Kids']) && array_key_exists('Kids', $kids) && isset($kids['Kids'][0])) {
+            return $this->getKids((string) $kids['Kids'][0]);
+        }
+
+        return $kids;
     }
 
     /**
@@ -146,8 +157,16 @@ class PDFObject
      * @return array
      * @throws Exception
      */
-    protected function getLayers(array $layers): array
+    protected function getLayers(array $root): array
     {
+        $ocProperties = $root['OCProperties'];
+        if($ocProperties instanceof ElementXRef) {
+            $layers = $this->getObjectById((string) $root['OCProperties'])[0]['D']['Order'];
+        }
+        else {
+            $layers = $root['OCProperties']['D']['Order'];
+        }
+
         $mapper = [];
 
         foreach ($layers as $code => $layer) {

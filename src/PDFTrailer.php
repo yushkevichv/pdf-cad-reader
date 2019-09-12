@@ -16,14 +16,12 @@ class PDFTrailer
     {
         if(
             (isset($trailer['Root']) || array_key_exists('Root', $trailer)) &&
-            (isset($trailer['Info']) || array_key_exists('Info', $trailer)) &&
             (isset($trailer['Size']) || array_key_exists('Size', $trailer)) &&
-            ($trailer['Root'] instanceof ElementXRef) &&
-            ($trailer['Info'] instanceof ElementXRef)
+            ($trailer['Root'] instanceof ElementXRef)
 
         ) {
             $this->root = $trailer['Root'];
-            $this->info = $trailer['Info'];
+            $this->info = $trailer['Info'] ?? null;
             $this->size = $trailer['Size'];
         }
         else {
