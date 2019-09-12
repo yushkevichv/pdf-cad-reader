@@ -1,10 +1,7 @@
 <?php
 
-
 namespace Yushkevichv\PDFCadReader;
 
-
-use Yushkevichv\PDFCadReader\PDFObjectElement\ElementArray;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementName;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementNumeric;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementString;
@@ -14,7 +11,13 @@ class Parser
 {
     protected $objects = [];
 
-    public function parseContent($content)
+    /**
+     * @param $content
+     *
+     * @return PDFObject
+     * @throws \Exception
+     */
+    public function parseContent($content) :PDFObject
     {
         // Create structure using TCPDF Parser.
         ob_start();
@@ -30,10 +33,9 @@ class Parser
             throw new \Exception('Object list not found. Possible secured file.');
         }
 
-//        // Create destination object.
         $pdfObject      = new PDFObject();
         $this->objects = [];
-//
+
         foreach ($data as $id => $structure) {
             $object = $this->parseObject($id, $structure);
             if($object) {
@@ -41,6 +43,7 @@ class Parser
             }
             unset($data[$id]);
         }
+
         $pdfObject->setObjects($this->objects);
         $pdfObject->setTrailer($this->parseTrailer($xref['trailer']));
         $pdfObject->buildIndex();
@@ -49,8 +52,11 @@ class Parser
     }
 
     /**
-     * @param string   $id
-     * @param array    $structure
+     * @param $id
+     * @param $structure
+     *
+     * @return mixed
+     * @throws \Exception
      */
     protected function parseObject($id, $structure)
     {
@@ -80,7 +86,7 @@ class Parser
                     if ($part != 'null') {
                         $element = $this->parseStructureElement($part[0], $part[1]);
                         if ($element) {
-                            // @todo catcher
+                            $result[$position] = $element;
                         }
                     }
                     break;
@@ -95,8 +101,13 @@ class Parser
 
     }
 
-
-    protected function parseStructure($structure)
+    /**
+     * @param $structure
+     *
+     * @return array
+     * @throws \Exception
+     */
+    protected function parseStructure($structure) :array
     {
         $elements = [];
         $count    = count($structure);
@@ -110,6 +121,13 @@ class Parser
         return $elements;
     }
 
+    /**
+     * @param $type
+     * @param $value
+     *
+     * @return array|bool|mixed|string|ElementXRef|null
+     * @throws \Exception
+     */
     protected function parseStructureElement($type, $value)
     {
         switch ($type) {
@@ -144,12 +162,17 @@ class Parser
 //                // Nothing to do with.
 //                break;
             default:
-                dd($type, $value);
                 throw new \Exception('Invalid type: "' . $type . '".');
         }
     }
 
-    protected function parseTrailer($structure)
+    /**
+     * @param $structure
+     *
+     * @return PDFTrailer
+     * @throws \Exception
+     */
+    protected function parseTrailer($structure) :PDFTrailer
     {
         $trailer = array();
         foreach ($structure as $name => $values) {
@@ -157,8 +180,8 @@ class Parser
             if (is_numeric($values)) {
                 $trailer[$name] = $values;
             } elseif (is_array($values)) {
-                $value          = $this->parseTrailer($values, null);
-                $trailer[$name] = new ElementArray($value, null);
+                $value          = $this->parseTrailer($values);
+                $trailer[$name] = $value;
             } elseif (strpos($values, '_') !== false) {
                 $trailer[$name] = new ElementXRef($values);
             } else {

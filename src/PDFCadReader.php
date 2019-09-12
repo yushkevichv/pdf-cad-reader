@@ -11,13 +11,18 @@ class PDFCadReader
         $this->parser = new Parser();
     }
 
-    public function parseFile(string $filename)
+    /**
+     * @param  string  $filename
+     *
+     * @return PDFObject
+     * @throws \Exception
+     */
+    public function parseFile(string $filename) : PDFObject
     {
         $content = file_get_contents($filename);
         $parser = new Parser();
-        $data = $parser->parseContent($content);
 
-        return $data;
+        return $parser->parseContent($content);
     }
 
 }

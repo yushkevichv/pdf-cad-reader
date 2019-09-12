@@ -7,6 +7,11 @@ namespace Yushkevichv\PDFCadReader;
 class Encoder
 {
 
+    /**
+     * @param $text
+     *
+     * @return string
+     */
     public static function decodeEntities($text)
     {
         $parts = preg_split('/(#\d{2})/s', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
@@ -21,6 +26,11 @@ class Encoder
         return $text;
     }
 
+    /**
+     * @param $value
+     *
+     * @return string
+     */
     public static function decodeHexa($value)
     {
         $text   = '';
@@ -110,6 +120,11 @@ class Encoder
         return $text;
     }
 
+    /**
+     * @param $objString
+     *
+     * @return string
+     */
     protected function DecodeStream($objString){
         preg_match('|stream(.*)endstream|ms', $objString, $matches);
         if(isset($matches[1])){
@@ -148,5 +163,4 @@ class Encoder
     {
         return html_entity_decode('&#' . ((int)$code) . ';', ENT_NOQUOTES, 'UTF-8');
     }
-
 }
