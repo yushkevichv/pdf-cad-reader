@@ -8,7 +8,7 @@ Parser use TCPDF library and common parsing ideas and code from [PDF Parser](htt
 ## Install ##
 
 ```
-composer require yushkevichv/pdf-cad-reader
+composer require "yushkevichv/pdf-cad-reader"
 
 ```
 
