@@ -36,7 +36,8 @@ class ElementString extends BaseElement
 //            $name = Encoder::decodeEntities($name);
 //            $name = Encoder::decodeHexadecimal($name, false);
             $name = Encoder::decodeUnicode($name);
-            return new self($name);
+            return $name;
+//            return new self($name);
         }
         return null;
     }

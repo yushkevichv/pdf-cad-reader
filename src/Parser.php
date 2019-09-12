@@ -5,8 +5,8 @@ namespace Yushkevichv\PDFCadReader;
 
 
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementArray;
-use Yushkevichv\PDFCadReader\PDFObjectElement\ElementHexa;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementName;
+use Yushkevichv\PDFCadReader\PDFObjectElement\ElementNumeric;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementString;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementXRef;
 
@@ -31,166 +31,67 @@ class Parser
         }
 
 //        // Create destination object.
-        $object      = new PDFObject();
+        $pdfObject      = new PDFObject();
         $this->objects = [];
 //
         foreach ($data as $id => $structure) {
-            $object = $this->parseObject($id, $structure, $object);
-            array_push($this->objects, $object);
+            $object = $this->parseObject($id, $structure);
+            if($object) {
+                $this->objects[$id] = $object;
+            }
             unset($data[$id]);
         }
-        dd($this->objects);
+        $pdfObject->setObjects($this->objects);
+        $pdfObject->setTrailer($this->parseTrailer($xref['trailer']));
 
-        dd($xref);
-
-//
-//        $document->setTrailer($this->parseTrailer($xref['trailer'], $document));
-//        $document->setObjects($this->objects);
-//        return $document;
-
-    }
-
-    public function parse($data)
-    {
-        if(empty($data)) {
-            throw new \Exception('Data is empty');
-        }
-
-        // find the pdf header starting position
-        if (($trimpos = strpos($data, '%PDF-')) === false) {
-            throw new \Exception('Invalid PDF data: missing %PDF header.');
-        }
-
+        return $pdfObject;
     }
 
     /**
      * @param string   $id
      * @param array    $structure
-     * @param PDFObject $object
      */
     protected function parseObject($id, $structure)
     {
-
-        $content = '';
-        $result = [];
-
         foreach ($structure as $position => $part) {
             switch ($part[0]) {
                 case '<<' :
-                    $result[] = [
-                        'id' => $id,
-                        'data' => $this->parseStructure($part[1])
-                    ];
+                    $result[$position] = $this->parseStructure($part[1]);
                 break;
                 case 'stream':
-                    $content = isset($part[3][0]) ? $part[3][0] : $part[1];
-                    dd($content);
-//                    if ($header->get('Type')->equals('ObjStm')) {
-//                        $match = array();
-//                        // Split xrefs and contents.
-//                        preg_match('/^((\d+\s+\d+\s*)*)(.*)$/s', $content, $match);
-//                        $content = $match[3];
-//                        // Extract xrefs.
-//                        $xrefs = preg_split(
-//                            '/(\d+\s+\d+\s*)/s',
-//                            $match[1],
-//                            -1,
-//                            PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
-//                        );
-//                        $table = array();
-//                        foreach ($xrefs as $xre   f) {
-//                            list($id, $position) = explode(' ', trim($xref));
-//                            $table[$position] = $id;
-//                        }
-//                        ksort($table);
-//                        $ids       = array_values($table);
-//                        $positions = array_keys($table);
-//                        foreach ($positions as $index => $position) {
-//                            $id            = $ids[$index] . '_0';
-//                            $next_position = isset($positions[$index + 1]) ? $positions[$index + 1] : strlen($content);
-//                            $sub_content   = substr($content, $position, $next_position - $position);
-//                            $sub_header         = Header::parse($sub_content, $document);
-//                            $object             = PDFObject::factory($document, $sub_header, '');
-//                            $this->objects[$id] = $object;
-//                        }
-//                        // It is not necessary to store this content.
-//                        $content = '';
-//                        return;
-//                    }
+                    $result[$position] = isset($part[3][0]) ? $part[3][0] : $part[1];
                     break;
+                case '[':
+                    $elements = array();
+                    foreach ($part[1] as $sub_element) {
+                        $sub_type   = $sub_element[0];
+                        $sub_value  = $sub_element[1];
+                        $element = $this->parseStructureElement($sub_type, $sub_value);
+                        if($element) {
+                            $elements[] = $element;
+                        }
+                    }
+                    if($elements) {
+                        $result[$position] = $elements;
+                    }
+                break;
                 default:
-//                    dd($result);
-                    dd($part[0]);
-//                    dd('default');
+                    if ($part != 'null') {
+                        $element = $this->parseStructureElement($part[0], $part[1]);
+                        if ($element) {
+                            // @todo catcher
+                        }
+                    }
+                    break;
                 break;
             }
+
         }
 
-        return $result;
-//        $header  = new Header(array(), $document);
-//        $content = '';
-//        foreach ($structure as $position => $part) {
-//            switch ($part[0]) {
-//                case '[':
-//                    $elements = array();
-//                    foreach ($part[1] as $sub_element) {
-//                        $sub_type   = $sub_element[0];
-//                        $sub_value  = $sub_element[1];
-//                        $elements[] = $this->parseHeaderElement($sub_type, $sub_value, $document);
-//                    }
-//                    $header = new Header($elements, $document);
-//                    break;
-//                case '<<':
-//                    $header = $this->parseHeader($part[1], $document);
-//                    break;
-//                case 'stream':
-//                    $content = isset($part[3][0]) ? $part[3][0] : $part[1];
-//                    if ($header->get('Type')->equals('ObjStm')) {
-//                        $match = array();
-//                        // Split xrefs and contents.
-//                        preg_match('/^((\d+\s+\d+\s*)*)(.*)$/s', $content, $match);
-//                        $content = $match[3];
-//                        // Extract xrefs.
-//                        $xrefs = preg_split(
-//                            '/(\d+\s+\d+\s*)/s',
-//                            $match[1],
-//                            -1,
-//                            PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE
-//                        );
-//                        $table = array();
-//                        foreach ($xrefs as $xref) {
-//                            list($id, $position) = explode(' ', trim($xref));
-//                            $table[$position] = $id;
-//                        }
-//                        ksort($table);
-//                        $ids       = array_values($table);
-//                        $positions = array_keys($table);
-//                        foreach ($positions as $index => $position) {
-//                            $id            = $ids[$index] . '_0';
-//                            $next_position = isset($positions[$index + 1]) ? $positions[$index + 1] : strlen($content);
-//                            $sub_content   = substr($content, $position, $next_position - $position);
-//                            $sub_header         = Header::parse($sub_content, $document);
-//                            $object             = PDFObject::factory($document, $sub_header, '');
-//                            $this->objects[$id] = $object;
-//                        }
-//                        // It is not necessary to store this content.
-//                        $content = '';
-//                        return;
-//                    }
-//                    break;
-//                default:
-//                    if ($part != 'null') {
-//                        $element = $this->parseHeaderElement($part[0], $part[1], $document);
-//                        if ($element) {
-//                            $header = new Header(array($element), $document);
-//                        }
-//                    }
-//                    break;
-//            }
-//        }
-//        if (!isset($this->objects[$id])) {
-//            $this->objects[$id] = PDFObject::factory($document, $header, $content);
-//        }
+        if($result) {
+            return $result;
+        }
+
     }
 
 
@@ -204,31 +105,20 @@ class Parser
             $type  = $structure[$position + 1][0];
             $value = $structure[$position + 1][1];
             $elements[$name] = $this->parseStructureElement($type, $value);
-//            dump($elements);
-
         }
         return $elements;
-//        return new Header($elements, $document);
     }
 
     protected function parseStructureElement($type, $value)
     {
-
         switch ($type) {
             case '<<':
                 return $this->parseStructure($value);
             case 'numeric':
-//                return new ElementNumeric($value, $document);
-//            case 'boolean':
-//                return new ElementBoolean($value, $document);
-//            case 'null':
-//                return new ElementNull($value, $document);
+                return ElementNumeric::parse($value);
+            break;
             case '(':
-//                if ($date = ElementDate::parse('(' . $value . ')', $document)) {
-//                    return $date;
-//                } else {
                     return ElementString::parse('(' . $value . ')');
-//                }
             case '<':
                 return $this->parseStructureElement('(', Encoder::decodeHexa($value));
             case '/':
@@ -243,8 +133,11 @@ class Parser
                     $sub_value = $sub_element[1];
                     $values[]  = $this->parseStructureElement($sub_type, $sub_value);
                 }
-                return new ElementArray($values);
-//            case 'endstream':
+                return $values;
+            break;
+            case 'endstream':
+
+            break;
 //            case 'obj': //I don't know what it means but got my project fixed.
 //            case '':
 //                // Nothing to do with.
@@ -254,4 +147,25 @@ class Parser
                 throw new \Exception('Invalid type: "' . $type . '".');
         }
     }
+
+    protected function parseTrailer($structure)
+    {
+        $trailer = array();
+        foreach ($structure as $name => $values) {
+            $name = ucfirst($name);
+            if (is_numeric($values)) {
+                $trailer[$name] = $values;
+            } elseif (is_array($values)) {
+                $value          = $this->parseTrailer($values, null);
+                $trailer[$name] = new ElementArray($value, null);
+            } elseif (strpos($values, '_') !== false) {
+                $trailer[$name] = new ElementXRef($values);
+            } else {
+                $trailer[$name] = $this->parseHeaderElement('(', $values);
+            }
+        }
+
+        return new PDFTrailer($trailer);
+    }
+
 }

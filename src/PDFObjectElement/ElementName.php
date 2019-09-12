@@ -13,7 +13,7 @@ class ElementName extends BaseElement
             $name   = $match['name'];
             $offset += strpos($content, $name) + strlen($name);
             $name   = Encoder::decodeEntities($name);
-            return new self($name);
+            return $name;
         }
         return null;
     }

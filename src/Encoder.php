@@ -110,6 +110,35 @@ class Encoder
         return $text;
     }
 
+    protected function DecodeStream($objString){
+        preg_match('|stream(.*)endstream|ms', $objString, $matches);
+        if(isset($matches[1])){
+            $stream = trim($matches[1]);
+            preg_match('|/Filter ?\[(.*)\]|', $objString, $matches);
+            if(isset($matches[1])){
+                $filter = $matches[1];
+                preg_match_all('|(/\w+)|', $filter, $matches);
+                foreach($matches[1] as $value){
+                    if($value == '/FlateDecode'){
+                        return gzuncompress($stream);
+                    }
+                }
+            }
+            else{
+                preg_match('|/Filter ?/FlateDecode|', $objString, $matches);
+                if(isset($matches[0])){
+                    return gzuncompress($stream);
+                }
+                else{
+                    return $stream;
+                }
+            }
+            return $stream;
+        }
+        return '';
+    }
+
+
     /**
      * @param int $code
      *
