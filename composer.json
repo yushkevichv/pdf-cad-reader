@@ -17,7 +17,5 @@
         "psr-4": {
             "Yushkevichv\\PDFCadReader\\": "src"
         }
-    },
-    "minimum-stability": "dev",
-    "require": {}
+    }
 }
