@@ -23,13 +23,15 @@ class PDFObject
 
     public function getStreamData() :array
     {
-        $data =[];
+        $this->streamData;
+    }
+
+    public function setStreamData()
+    {
         $streamKeys = $this->index['mappers']['streams'];
         foreach ($streamKeys as $key => $stream) {
-            $data[$key] = $this->getObjectById($stream)[1];
+            $this->streamData[$key] = $this->getObjectById($stream)[1];
         }
-
-        return $data;
     }
 
     /**
@@ -90,6 +92,8 @@ class PDFObject
         $this->index['mappers']['streams'] = array_values($this->getLayersMapper($kids['Contents']));
         $this->index['mappers']['fonts'] = $this->getFontMapper($kids['Resources']['Font']);
         $this->index['layers'] = $this->getLayers($root);
+
+        $this->setStreamData();
     }
 
     protected function getKids($key)
