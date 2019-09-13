@@ -12,6 +12,14 @@ class PDFObject
     protected $streamData = [];
     protected $trailer;
 
+    public function __construct()
+    {
+        $this->objects = [];
+        $this->index = [];
+        $this->streamData = [];
+        $this->trailer = null;
+    }
+
     /**
      * @return array
      */
@@ -25,7 +33,7 @@ class PDFObject
         return $this->streamData;
     }
 
-    public function setStreamData()
+    private function setStreamData()
     {
         $streamKeys = $this->index['mappers']['streams'];
         foreach ($streamKeys as $key => $stream) {
@@ -44,7 +52,7 @@ class PDFObject
     /**
      * @return string
      */
-    public function getRoot()
+    private function getRoot()
     {
         return (string) $this->getTrailer()->getRoot();
     }
@@ -103,7 +111,7 @@ class PDFObject
         $this->setStreamData();
     }
 
-    protected function getKids($key)
+    private function getKids($key)
     {
         $kids = $this->getObjectById($key)[0];
         if (isset($kids['Kids']) && array_key_exists('Kids', $kids) && isset($kids['Kids'][0])) {
@@ -134,7 +142,7 @@ class PDFObject
      *
      * @return array
      */
-    protected function getLayersMapper($layers): array
+    private function getLayersMapper($layers): array
     {
         $mapper = [];
         foreach ($layers as $code => $layer) {
@@ -149,7 +157,7 @@ class PDFObject
      *
      * @return array
      */
-    protected function getFontMapper(array $fonts): array
+    private function getFontMapper(array $fonts): array
     {
         $mapper = [];
         foreach ($fonts as $code => $layer) {
@@ -170,7 +178,7 @@ class PDFObject
      *
      * @return array
      */
-    protected function getLayers(array $root): array
+    private function getLayers(array $root): array
     {
         $ocProperties = $root['OCProperties'];
         if ($ocProperties instanceof ElementXRef) {

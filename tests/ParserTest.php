@@ -25,16 +25,13 @@ class ParserTest extends BaseTestCase
 
     public function testParseEmptyData()
     {
-        $xref = [];
-        $data = [];
         $mockParser =  m::mock(\TCPDF_PARSER::class);
         $parser = new Parser();
         $mockParser->shouldReceive('getParsedData')
-            ->once()->andReturn([$xref, $data]);
+            ->once()->andReturn([$xref = [], $data = []]);
 
         $this->expectException('\Exception');
 
         $parser->parseContent($mockParser);
     }
-
 }

@@ -59,7 +59,7 @@ class Parser
      *
      * @return mixed
      */
-    protected function parseObject($id, $structure)
+    private function parseObject($id, $structure)
     {
         foreach ($structure as $position => $part) {
             switch ($part[0]) {
@@ -107,7 +107,7 @@ class Parser
      *
      * @return array
      */
-    protected function parseStructure($structure) :array
+    private function parseStructure($structure) :array
     {
         $elements = [];
         $count = count($structure);
@@ -130,7 +130,7 @@ class Parser
      *
      * @return array|bool|mixed|string|ElementXRef|null
      */
-    protected function parseStructureElement($type, $value)
+    private function parseStructureElement($type, $value)
     {
         switch ($type) {
             case '<<':
@@ -178,7 +178,7 @@ class Parser
      *
      * @return PDFTrailer
      */
-    protected function parseTrailer($structure) :PDFTrailer
+    private function parseTrailer($structure) :PDFTrailer
     {
         $trailer = [];
         foreach ($structure as $name => $values) {

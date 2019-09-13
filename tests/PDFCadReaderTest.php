@@ -13,5 +13,7 @@ class PDFCadReaderTest extends BaseTestCase
         $pdfCadReader = new PDFCadReader();
         $data = $pdfCadReader->parseFile($this->dummyPdf);
         $this->assertTrue($data instanceof PDFObject);
+        $this->assertTrue(is_array($data->getStreamData()));
+        $this->assertTrue(is_array($data->getIndex()));
     }
 }
