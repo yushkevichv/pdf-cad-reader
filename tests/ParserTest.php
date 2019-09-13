@@ -2,18 +2,16 @@
 
 namespace Yushkevichv\PDFCadReader\Tests;
 
-
-use Yushkevichv\PDFCadReader\Parser;
 use Mockery as m;
+use Yushkevichv\PDFCadReader\Parser;
 
 class ParserTest extends BaseTestCase
 {
-
     public function testParseEncryptPdf()
     {
         $xref['trailer']['encrypt'] = true;
         $data = [];
-        $mockParser =  m::mock(\TCPDF_PARSER::class);
+        $mockParser = m::mock(\TCPDF_PARSER::class);
         $parser = new Parser();
         $mockParser->shouldReceive('getParsedData')
             ->once()->andReturn([$xref, $data]);
@@ -25,7 +23,7 @@ class ParserTest extends BaseTestCase
 
     public function testParseEmptyData()
     {
-        $mockParser =  m::mock(\TCPDF_PARSER::class);
+        $mockParser = m::mock(\TCPDF_PARSER::class);
         $parser = new Parser();
         $mockParser->shouldReceive('getParsedData')
             ->once()->andReturn([$xref = [], $data = []]);

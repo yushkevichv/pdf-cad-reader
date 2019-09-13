@@ -7,7 +7,6 @@ use Yushkevichv\PDFCadReader\PDFObject;
 
 class PDFCadReaderTest extends BaseTestCase
 {
-
     public function testParse()
     {
         $pdfCadReader = new PDFCadReader();

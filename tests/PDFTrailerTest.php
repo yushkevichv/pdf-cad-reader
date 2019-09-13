@@ -27,6 +27,5 @@ class PDFTrailerTest extends BaseTestCase
 
         $this->expectException('\Exception');
         $pdfTrailer = new PDFTrailer($data);
-
     }
 }

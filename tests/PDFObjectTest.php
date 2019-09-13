@@ -2,10 +2,11 @@
 
 namespace Yushkevichv\PDFCadReader\Tests;
 
+use Mockery as m;
 use Yushkevichv\PDFCadReader\PDFObject;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementXRef;
 use Yushkevichv\PDFCadReader\PDFTrailer;
-use Mockery as m;
+
 
 class PDFObjectTest extends BaseTestCase
 {
@@ -20,7 +21,6 @@ class PDFObjectTest extends BaseTestCase
 
         $this->expectException('\Exception');
         $pdfObject->getObjectById('error_code');
-
     }
 
     public function testBuildMultipagePDFIndex()
@@ -32,7 +32,7 @@ class PDFObjectTest extends BaseTestCase
 
         $pdfTrailer = new PDFTrailer($data);
 
-        $pdfObject =  m::mock(PDFObject::class)->makePartial();
+        $pdfObject = m::mock(PDFObject::class)->makePartial();
         $pdfObject->setTrailer($pdfTrailer);
 
         $pdfObject->shouldReceive('getObjectById')
@@ -45,6 +45,4 @@ class PDFObjectTest extends BaseTestCase
 
         $pdfObject->buildIndex();
     }
-
-
 }
