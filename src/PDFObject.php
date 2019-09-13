@@ -23,7 +23,7 @@ class PDFObject
 
     public function getStreamData() :array
     {
-        $this->streamData;
+        return $this->streamData;
     }
 
     public function setStreamData()
