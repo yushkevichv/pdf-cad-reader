@@ -14,8 +14,9 @@ class Parser
     /**
      * @param $content
      *
-     * @return PDFObject
      * @throws \Exception
+     *
+     * @return PDFObject
      */
     public function parseContent($content) :PDFObject
     {
@@ -33,12 +34,12 @@ class Parser
             throw new \Exception('Object list not found. Possible secured file.');
         }
 
-        $pdfObject      = new PDFObject();
+        $pdfObject = new PDFObject();
         $this->objects = [];
 
         foreach ($data as $id => $structure) {
             $object = $this->parseObject($id, $structure);
-            if($object) {
+            if ($object) {
                 $this->objects[$id] = $object;
             }
             unset($data[$id]);
@@ -55,30 +56,31 @@ class Parser
      * @param $id
      * @param $structure
      *
-     * @return mixed
      * @throws \Exception
+     *
+     * @return mixed
      */
     protected function parseObject($id, $structure)
     {
         foreach ($structure as $position => $part) {
             switch ($part[0]) {
-                case '<<' :
+                case '<<':
                     $result[$position] = $this->parseStructure($part[1]);
                 break;
                 case 'stream':
                     $result[$position] = isset($part[3][0]) ? $part[3][0] : $part[1];
                     break;
                 case '[':
-                    $elements = array();
+                    $elements = [];
                     foreach ($part[1] as $sub_element) {
-                        $sub_type   = $sub_element[0];
-                        $sub_value  = $sub_element[1];
+                        $sub_type = $sub_element[0];
+                        $sub_value = $sub_element[1];
                         $element = $this->parseStructureElement($sub_type, $sub_value);
-                        if($element) {
+                        if ($element) {
                             $elements[] = $element;
                         }
                     }
-                    if($elements) {
+                    if ($elements) {
                         $result[$position] = $elements;
                     }
                 break;
@@ -92,32 +94,32 @@ class Parser
                     break;
                 break;
             }
-
         }
 
-        if($result) {
+        if ($result) {
             return $result;
         }
-
     }
 
     /**
      * @param $structure
      *
-     * @return array
      * @throws \Exception
+     *
+     * @return array
      */
     protected function parseStructure($structure) :array
     {
         $elements = [];
-        $count    = count($structure);
+        $count = count($structure);
 
         for ($position = 0; $position < $count; $position += 2) {
-            $name  = $structure[$position][1];
-            $type  = $structure[$position + 1][0];
+            $name = $structure[$position][1];
+            $type = $structure[$position + 1][0];
             $value = $structure[$position + 1][1];
             $elements[$name] = $this->parseStructureElement($type, $value);
         }
+
         return $elements;
     }
 
@@ -125,8 +127,9 @@ class Parser
      * @param $type
      * @param $value
      *
-     * @return array|bool|mixed|string|ElementXRef|null
      * @throws \Exception
+     *
+     * @return array|bool|mixed|string|ElementXRef|null
      */
     protected function parseStructureElement($type, $value)
     {
@@ -137,23 +140,24 @@ class Parser
                 return ElementNumeric::parse($value);
             break;
             case '(':
-                    return ElementString::parse('(' . $value . ')');
+                    return ElementString::parse('('.$value.')');
             case '<':
                 return $this->parseStructureElement('(', Encoder::decodeHexa($value));
             case '/':
-                return ElementName::parse('/' . $value);
+                return ElementName::parse('/'.$value);
             case 'null':
-                return null;
+                return;
             case 'ojbref': // old mistake in tcpdf parser
             case 'objref':
                 return new ElementXRef($value);
             case '[':
                 $values = [];
                 foreach ($value as $sub_element) {
-                    $sub_type  = $sub_element[0];
+                    $sub_type = $sub_element[0];
                     $sub_value = $sub_element[1];
-                    $values[]  = $this->parseStructureElement($sub_type, $sub_value);
+                    $values[] = $this->parseStructureElement($sub_type, $sub_value);
                 }
+
                 return $values;
             break;
             case 'endstream':
@@ -164,19 +168,20 @@ class Parser
 //                // Nothing to do with.
 //                break;
             default:
-                throw new \Exception('Invalid type: "' . $type . '".');
+                throw new \Exception('Invalid type: "'.$type.'".');
         }
     }
 
     /**
      * @param $structure
      *
-     * @return PDFTrailer
      * @throws \Exception
+     *
+     * @return PDFTrailer
      */
     protected function parseTrailer($structure) :PDFTrailer
     {
-        $trailer = array();
+        $trailer = [];
         foreach ($structure as $name => $values) {
             $name = ucfirst($name);
             if (is_numeric($values)) {
@@ -193,5 +198,4 @@ class Parser
 
         return new PDFTrailer($trailer);
     }
-
 }

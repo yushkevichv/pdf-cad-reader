@@ -1,14 +1,11 @@
 <?php
 
-
 namespace Yushkevichv\PDFCadReader\PDFObjectElement;
-
 
 use Yushkevichv\PDFCadReader\Encoder;
 
 class ElementString extends BaseElement
 {
-
     public static function parse($content, &$offset = 0)
     {
         if (preg_match('/^\s*\((?P<name>.*)/s', $content, $match)) {
@@ -24,9 +21,9 @@ class ElementString extends BaseElement
                 $start_search_end = $cur_start_pos + 1;
             }
             // Extract string.
-            $name   = substr($name, 0, $cur_start_pos);
+            $name = substr($name, 0, $cur_start_pos);
             $offset += strpos($content, '(') + $cur_start_pos + 2; // 2 for '(' and ')'
-            $name   = str_replace(
+            $name = str_replace(
                 ['\\\\', '\\ ', '\\/', '\(', '\)', '\n', '\r', '\t'],
                 ['\\',   ' ',   '/',   '(',  ')',  "\n", "\r", "\t"],
                 $name
@@ -36,10 +33,9 @@ class ElementString extends BaseElement
 //            $name = Encoder::decodeEntities($name);
 //            $name = Encoder::decodeHexadecimal($name, false);
             $name = Encoder::decodeUnicode($name);
+
             return $name;
 //            return new self($name);
         }
-        return null;
     }
-
 }
