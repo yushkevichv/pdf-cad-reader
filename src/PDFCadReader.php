@@ -12,10 +12,11 @@ class PDFCadReader
     }
 
     /**
-     * @param  string  $filename
+     * @param string $filename
+     *
+     * @throws \Exception
      *
      * @return PDFObject
-     * @throws \Exception
      */
     public function parseFile(string $filename) : PDFObject
     {
@@ -24,5 +25,4 @@ class PDFCadReader
 
         return $parser->parseContent($content);
     }
-
 }
