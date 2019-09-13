@@ -18,14 +18,13 @@ class Parser
      *
      * @return PDFObject
      */
-    public function parseContent($content) :PDFObject
+    public function parseContent(\TCPDF_PARSER $parser) :PDFObject
     {
         // Create structure using TCPDF Parser.
-        ob_start();
-        @$parser = new \TCPDF_PARSER(ltrim($content));
+//        ob_start();
         list($xref, $data) = $parser->getParsedData();
         unset($parser);
-        ob_end_clean();
+//        ob_end_clean();
 
         if (isset($xref['trailer']['encrypt'])) {
             throw new \Exception('Secured pdf file are currently not supported.');

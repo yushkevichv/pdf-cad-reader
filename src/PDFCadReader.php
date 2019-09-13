@@ -20,9 +20,10 @@ class PDFCadReader
      */
     public function parseFile(string $filename) : PDFObject
     {
+        // @todo addd check for invalid data
         $content = file_get_contents($filename);
         $parser = new Parser();
 
-        return $parser->parseContent($content);
+        return $parser->parseContent(new \TCPDF_PARSER(ltrim($content)));
     }
 }
