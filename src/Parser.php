@@ -18,14 +18,13 @@ class Parser
      *
      * @return PDFObject
      */
-    public function parseContent($content) :PDFObject
+    public function parseContent(\TCPDF_PARSER $parser) :PDFObject
     {
         // Create structure using TCPDF Parser.
-        ob_start();
-        @$parser = new \TCPDF_PARSER(ltrim($content));
+//        ob_start();
         list($xref, $data) = $parser->getParsedData();
         unset($parser);
-        ob_end_clean();
+//        ob_end_clean();
 
         if (isset($xref['trailer']['encrypt'])) {
             throw new \Exception('Secured pdf file are currently not supported.');
@@ -60,7 +59,7 @@ class Parser
      *
      * @return mixed
      */
-    protected function parseObject($id, $structure)
+    private function parseObject($id, $structure)
     {
         foreach ($structure as $position => $part) {
             switch ($part[0]) {
@@ -108,7 +107,7 @@ class Parser
      *
      * @return array
      */
-    protected function parseStructure($structure) :array
+    private function parseStructure($structure) :array
     {
         $elements = [];
         $count = count($structure);
@@ -131,7 +130,7 @@ class Parser
      *
      * @return array|bool|mixed|string|ElementXRef|null
      */
-    protected function parseStructureElement($type, $value)
+    private function parseStructureElement($type, $value)
     {
         switch ($type) {
             case '<<':
@@ -179,7 +178,7 @@ class Parser
      *
      * @return PDFTrailer
      */
-    protected function parseTrailer($structure) :PDFTrailer
+    private function parseTrailer($structure) :PDFTrailer
     {
         $trailer = [];
         foreach ($structure as $name => $values) {

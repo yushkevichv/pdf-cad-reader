@@ -12,6 +12,14 @@ class PDFObject
     protected $streamData = [];
     protected $trailer;
 
+    public function __construct()
+    {
+        $this->objects = [];
+        $this->index = [];
+        $this->streamData = [];
+        $this->trailer = null;
+    }
+
     /**
      * @return array
      */
@@ -25,7 +33,7 @@ class PDFObject
         return $this->streamData;
     }
 
-    public function setStreamData()
+    private function setStreamData()
     {
         $streamKeys = $this->index['mappers']['streams'];
         foreach ($streamKeys as $key => $stream) {
@@ -44,7 +52,7 @@ class PDFObject
     /**
      * @return string
      */
-    public function getRoot()
+    private function getRoot()
     {
         return (string) $this->getTrailer()->getRoot();
     }
@@ -84,18 +92,26 @@ class PDFObject
 
         $kids = $this->getKids((string) $pages['Kids'][0]);
 
-        $this->index['info']['width'] = ($kids['MediaBox'][2] - $kids['MediaBox'][0]);
-        $this->index['info']['height'] = ($kids['MediaBox'][3] - $kids['MediaBox'][1]);
-        $this->index['info']['rotate'] = (int) $kids['Rotate'];
-        $this->index['mappers']['layers'] = $this->getLayersMapper($kids['Resources']['Properties']);
+        $this->index['info']['width'] = ($kids['MediaBox'][2] - $kids['MediaBox'][0]) ?? 0;
+        $this->index['info']['height'] = ($kids['MediaBox'][3] - $kids['MediaBox'][1]) ?? 0;
+        if (isset($kids['Rotate']) && array_key_exists('Rotate', $kids)) {
+            $this->index['info']['rotate'] = (int) $kids['Rotate'];
+        } else {
+            $this->index['info']['rotate'] = 0;
+        }
+
+        if (count($kids['Contents']) > 1) {
+            $this->index['mappers']['layers'] = $this->getLayersMapper($kids['Resources']['Properties']);
+            $this->index['mappers']['fonts'] = $this->getFontMapper($kids['Resources']['Font']);
+            $this->index['layers'] = $this->getLayers($root);
+        }
+
         $this->index['mappers']['streams'] = array_values($this->getLayersMapper($kids['Contents']));
-        $this->index['mappers']['fonts'] = $this->getFontMapper($kids['Resources']['Font']);
-        $this->index['layers'] = $this->getLayers($root);
 
         $this->setStreamData();
     }
 
-    protected function getKids($key)
+    private function getKids($key)
     {
         $kids = $this->getObjectById($key)[0];
         if (isset($kids['Kids']) && array_key_exists('Kids', $kids) && isset($kids['Kids'][0])) {
@@ -126,7 +142,7 @@ class PDFObject
      *
      * @return array
      */
-    protected function getLayersMapper($layers): array
+    private function getLayersMapper($layers): array
     {
         $mapper = [];
         foreach ($layers as $code => $layer) {
@@ -141,7 +157,7 @@ class PDFObject
      *
      * @return array
      */
-    protected function getFontMapper(array $fonts): array
+    private function getFontMapper(array $fonts): array
     {
         $mapper = [];
         foreach ($fonts as $code => $layer) {
@@ -162,7 +178,7 @@ class PDFObject
      *
      * @return array
      */
-    protected function getLayers(array $root): array
+    private function getLayers(array $root): array
     {
         $ocProperties = $root['OCProperties'];
         if ($ocProperties instanceof ElementXRef) {
