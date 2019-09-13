@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Yushkevichv\PDFCadReader;
 
 use Exception;
@@ -51,7 +50,7 @@ class PDFObject
     }
 
     /**
-     * @param  array  $objects
+     * @param array $objects
      */
     public function setObjects(array $objects)
     {
@@ -59,7 +58,7 @@ class PDFObject
     }
 
     /**
-     * @param  PDFTrailer  $trailer
+     * @param PDFTrailer $trailer
      */
     public function setTrailer(PDFTrailer $trailer)
     {
@@ -67,7 +66,7 @@ class PDFObject
     }
 
     /**
-     * Build index for file
+     * Build index for file.
      *
      * @throws Exception
      */
@@ -99,7 +98,7 @@ class PDFObject
     protected function getKids($key)
     {
         $kids = $this->getObjectById($key)[0];
-        if(isset($kids['Kids']) && array_key_exists('Kids', $kids) && isset($kids['Kids'][0])) {
+        if (isset($kids['Kids']) && array_key_exists('Kids', $kids) && isset($kids['Kids'][0])) {
             return $this->getKids((string) $kids['Kids'][0]);
         }
 
@@ -109,8 +108,9 @@ class PDFObject
     /**
      * @param $key
      *
-     * @return mixed
      * @throws Exception
+     *
+     * @return mixed
      */
     public function getObjectById($key)
     {
@@ -137,7 +137,7 @@ class PDFObject
     }
 
     /**
-     * @param  array  $fonts
+     * @param array $fonts
      *
      * @return array
      */
@@ -147,8 +147,8 @@ class PDFObject
         foreach ($fonts as $code => $layer) {
             // @todo implement work with fonts
             $mapper[$code] = [
-                'layer' => (string) $layer,
-                'fontFamily' => 'Arial'
+                'layer'      => (string) $layer,
+                'fontFamily' => 'Arial',
             ];
         }
 
@@ -156,18 +156,18 @@ class PDFObject
     }
 
     /**
-     * @param  array  $layers
+     * @param array $layers
+     *
+     * @throws Exception
      *
      * @return array
-     * @throws Exception
      */
     protected function getLayers(array $root): array
     {
         $ocProperties = $root['OCProperties'];
-        if($ocProperties instanceof ElementXRef) {
+        if ($ocProperties instanceof ElementXRef) {
             $layers = $this->getObjectById((string) $root['OCProperties'])[0]['D']['Order'];
-        }
-        else {
+        } else {
             $layers = $root['OCProperties']['D']['Order'];
         }
 

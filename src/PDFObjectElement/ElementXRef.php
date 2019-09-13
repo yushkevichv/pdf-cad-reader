@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Yushkevichv\PDFCadReader\PDFObjectElement;
-
 
 class ElementXRef extends BaseElement
 {
@@ -15,5 +13,4 @@ class ElementXRef extends BaseElement
     {
         return (string) $this->value;
     }
-
 }

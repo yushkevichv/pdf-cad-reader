@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Yushkevichv\PDFCadReader;
-
 
 class Encoder
 {
-
     /**
      * @param $text
      *
@@ -15,7 +12,7 @@ class Encoder
     public static function decodeEntities($text)
     {
         $parts = preg_split('/(#\d{2})/s', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-        $text  = '';
+        $text = '';
         foreach ($parts as $part) {
             if (preg_match('/^#\d{2}$/', $part)) {
                 $text .= chr(hexdec(trim($part, '#')));
@@ -23,6 +20,7 @@ class Encoder
                 $text .= $part;
             }
         }
+
         return $text;
     }
 
@@ -33,12 +31,12 @@ class Encoder
      */
     public static function decodeHexa($value)
     {
-        $text   = '';
+        $text = '';
         $length = strlen($value);
         if (substr($value, 0, 2) == '00') {
             for ($i = 0; $i < $length; $i += 4) {
                 $hex = substr($value, $i, 4);
-                $text .= '&#' . str_pad(hexdec($hex), 4, '0', STR_PAD_LEFT) . ';';
+                $text .= '&#'.str_pad(hexdec($hex), 4, '0', STR_PAD_LEFT).';';
             }
         } else {
             for ($i = 0; $i < $length; $i += 2) {
@@ -47,6 +45,7 @@ class Encoder
             }
         }
         $text = html_entity_decode($text, ENT_NOQUOTES, 'UTF-8');
+
         return $text;
     }
 
@@ -58,7 +57,7 @@ class Encoder
     public static function decodeOctal($text)
     {
         $parts = preg_split('/(\\\\\d{3})/s', $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-        $text  = '';
+        $text = '';
         foreach ($parts as $part) {
             if (preg_match('/^\\\\\d{3}$/', $part)) {
                 $text .= chr(octdec(trim($part, '\\')));
@@ -66,6 +65,7 @@ class Encoder
                 $text .= $part;
             }
         }
+
         return $text;
     }
 
@@ -81,7 +81,7 @@ class Encoder
         if (stripos($hexa, '<?xml') !== false) {
             return $hexa;
         }
-        $text  = '';
+        $text = '';
         $parts = preg_split('/(<[a-f0-9]+>)/si', $hexa, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
         foreach ($parts as $part) {
             if (preg_match('/^<.*>$/', $part) && stripos($part, '<?xml') === false) {
@@ -98,6 +98,7 @@ class Encoder
                 $text .= $part;
             }
         }
+
         return $text;
     }
 
@@ -111,12 +112,13 @@ class Encoder
         if (preg_match('/^\xFE\xFF/i', $text)) {
             // Strip U+FEFF byte order marker.
             $decode = substr($text, 2);
-            $text   = '';
+            $text = '';
             $length = strlen($decode);
             for ($i = 0; $i < $length; $i += 2) {
                 $text .= self::uchr(hexdec(bin2hex(substr($decode, $i, 2))));
             }
         }
+
         return $text;
     }
 
@@ -125,34 +127,34 @@ class Encoder
      *
      * @return string
      */
-    protected function DecodeStream($objString){
+    protected function DecodeStream($objString)
+    {
         preg_match('|stream(.*)endstream|ms', $objString, $matches);
-        if(isset($matches[1])){
+        if (isset($matches[1])) {
             $stream = trim($matches[1]);
             preg_match('|/Filter ?\[(.*)\]|', $objString, $matches);
-            if(isset($matches[1])){
+            if (isset($matches[1])) {
                 $filter = $matches[1];
                 preg_match_all('|(/\w+)|', $filter, $matches);
-                foreach($matches[1] as $value){
-                    if($value == '/FlateDecode'){
+                foreach ($matches[1] as $value) {
+                    if ($value == '/FlateDecode') {
                         return gzuncompress($stream);
                     }
                 }
-            }
-            else{
+            } else {
                 preg_match('|/Filter ?/FlateDecode|', $objString, $matches);
-                if(isset($matches[0])){
+                if (isset($matches[0])) {
                     return gzuncompress($stream);
-                }
-                else{
+                } else {
                     return $stream;
                 }
             }
+
             return $stream;
         }
+
         return '';
     }
-
 
     /**
      * @param int $code
@@ -161,6 +163,6 @@ class Encoder
      */
     public static function uchr($code)
     {
-        return html_entity_decode('&#' . ((int)$code) . ';', ENT_NOQUOTES, 'UTF-8');
+        return html_entity_decode('&#'.((int) $code).';', ENT_NOQUOTES, 'UTF-8');
     }
 }
