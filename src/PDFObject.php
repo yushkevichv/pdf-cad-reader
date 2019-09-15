@@ -3,7 +3,10 @@
 namespace Yushkevichv\PDFCadReader;
 
 use Exception;
+use Yushkevichv\PDFCadReader\PDFFont\FontInfo;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementXRef;
+use Yushkevichv\PDFCadReader\PDFFont\PDFFont;
+
 
 class PDFObject
 {
@@ -159,16 +162,72 @@ class PDFObject
      */
     private function getFontMapper(array $fonts): array
     {
+
         $mapper = [];
         foreach ($fonts as $code => $layer) {
+            $fontObject = $this->buildFontObject($code, (string) $layer);
+            dd($fontObject);
             // @todo implement work with fonts
             $mapper[$code] = [
                 'layer'      => (string) $layer,
                 'fontFamily' => 'Arial',
+                'font' => $fontObject
             ];
         }
 
         return $mapper;
+    }
+
+    private function buildFontObject($fontCode, string $layer) :PDFFont
+    {
+        $fontObject = new PDFFont();
+        $fontObject->code = $fontCode;
+        $font = $baseFontInfo = $this->getObjectById($layer)[0];
+        $composite = false;
+
+        $fontObject->subType = $font['Subtype'];
+        if($fontObject->subType == 'Type0') {
+            // If font is a composite
+            //  - get the descendant font
+            //  - set the type according to the descendant font
+            //  - get the FontDescriptor from the descendant font
+
+            if(is_array($font['DescendantFonts'])) {
+                $font = $font['DescendantFonts'][0];
+            }
+            else {
+                $font = $font['DescendantFonts'];
+            }
+            $composite = true;
+        }
+
+        $descriptor = $this->getObjectById((string) $font['FontDescriptor'])[0];
+        // work with hash?
+
+        $fontObject->encoding = $baseFontInfo['Encoding'];
+        $fontObject->name = $descriptor['FontName'];
+
+        $fontObject->flags = $descriptor['Flags'];
+        $fontObject->composite = $composite;
+
+        $fontObject->firstChar = $font['FirstChar'] ?? 0;
+        $fontObject->lastChar = $font['LastChar'] ?? ($composite ? 0xFFFF : 0xFF);
+
+        $fontInfo = new FontInfo($descriptor);
+        $fontObject->fontInfo = $fontInfo;
+
+        $fontFile = $descriptor['FontFile'] ?? $descriptor['FontFile2'] ?? $descriptor['FontFile3'] ?? null;
+        if($fontFile && ($fontFile instanceof ElementXRef)) {
+            $fontFile = $this->getObjectById((string) $fontFile);
+        }
+        dd($fontFile);
+
+        dd($descriptor);
+
+        dd($font);
+
+
+        return $fontObject;
     }
 
     /**
