@@ -167,7 +167,8 @@ class PDFObject
         $mapper = [];
         foreach ($fonts as $code => $layer) {
             $fontObject = $this->buildFontObject($code, (string) $layer);
-            dd($fontObject);
+            dd($fontObject->decode('<0244026802650011>'));
+            dd($fontObject->decode('<02450262026b026c0268025c>'));
             // @todo implement work with fonts
             $mapper[$code] = [
                 'layer'      => (string) $layer,
@@ -239,7 +240,7 @@ class PDFObject
             throw new \Exception('Inconsistent descriptor and font file');
         }
 
-        $data = $fontObject->checkAndRepair();
+        $fontObject->buildFontFileData();
 
 
         return $fontObject;

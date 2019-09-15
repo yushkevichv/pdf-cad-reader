@@ -4,6 +4,9 @@
 namespace Yushkevichv\PDFCadReader\PDFFont;
 
 
+use FontLib\Font;
+use Illuminate\Support\Facades\Storage;
+
 class PDFFont
 {
     public $code;
@@ -21,6 +24,7 @@ class PDFFont
     public $init = [];
     public $fontInfo;
     public $fontFile;
+    public $fontFileData;
     public $CIDSystemInfo = [];
 
     // Unicode Private Use Areas:
@@ -89,6 +93,8 @@ class PDFFont
         $this->toUnicode = $initCMap['toUnicode'];
         $this->init['init_cmap'] = $initCMap['cmap'];
 
+//        dd($this->getUnicodeSymbol(581));
+
     }
 
     public function initCMapTable()
@@ -118,12 +124,20 @@ class PDFFont
 
         $this->defaultEncoding = $defaultEncoding;
         $toUnicode = $this->buildToUnicode();
+//        dd($toUnicode);
 
         return [
             'toUnicode' => $toUnicode,
             'cmap' => new CMap(false)
 
         ];
+    }
+
+    public function getUnicodeSymbol($i) {
+        if ($this->toUnicode['firstChar'] <= $i && $i <= $this->toUnicode['lastChar']) {
+            return mb_chr($i);
+        }
+        return null;
     }
 
     private function buildToUnicode()
@@ -182,11 +196,34 @@ class PDFFont
 
     }
 
-    public function checkAndRepair()
+    public function buildFontFileData()
     {
-        $fontFileData = new FontFileData($this);
-        dd($fontFileData);
-
+        $tmpFileName = 'font_'.time().'.tiff';
+        Storage::disk('local')->put($tmpFileName, $this->fontFile->stream);
+        $this->fontFileData = Font::load(storage_path('app/font.tiff'));
+//        $glyphIndexArray = array_flip($this->fontFileData->getUnicodeCharMap())[581];
+//        dd(html_entity_decode("&#{$glyphIndexArray};"));
+//        dd($this->fontFileData->getData('glyf')[581]->getSVGContours());
+        Storage::disk('local')->delete($tmpFileName);
+//        dd($this->fontFileData->getData('glyf')[0]->raw);
     }
 
+    public function decode($str) :string
+    {
+        preg_match("#([<](.*)[>])#", $str, $parts);
+        if($parts) {
+           $str = $parts[2];
+        }
+        $glyphIndexArray = array_flip($this->fontFileData->getUnicodeCharMap());
+        $chars = str_split($str, 4);
+        $text = '';
+        foreach ($chars as $char) {
+            $charCode = hexdec($char);
+            $text .= html_entity_decode("&#{$glyphIndexArray[$charCode]};");
+        }
+
+        dd($text);
+
+
+    }
 }
