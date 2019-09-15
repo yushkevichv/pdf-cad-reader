@@ -65,10 +65,8 @@ class PDFFont
         }
 
         $this->defaultEncoding = $defaultEncoding;
-        $toUnicode = $this->buildToUnicode();
-        dd($defaultEncoding);
-
-
+        $unicodeIdentityMap = $this->buildToUnicode();
+        return new CMap(false);
     }
 
     private function buildToUnicode()
@@ -81,7 +79,6 @@ class PDFFont
         if (!$this->composite /* is simple font */) {
             return $this->buildSimpleFontToUnicode();
         }
-        dd($this);
 
         if ($this->composite && (
                 ($this->CIDSystemInfo['Registry'] === 'Adobe' &&
@@ -94,8 +91,12 @@ class PDFFont
         ) {
             // @todo implement work with "simple" font
             throw new \Exception('work with this CIDSystem Font not implemented');
-
         }
+
+        return [
+            'firstChar' => $this->firstChar,
+            'lastChar' => $this->lastChar,
+        ];
 
 
     }
