@@ -3,6 +3,7 @@
 namespace Yushkevichv\PDFCadReader;
 
 use Exception;
+use Yushkevichv\PDFCadReader\PDFFont\FontFile;
 use Yushkevichv\PDFCadReader\PDFFont\FontInfo;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementXRef;
 use Yushkevichv\PDFCadReader\PDFFont\PDFFont;
@@ -166,6 +167,7 @@ class PDFObject
         $mapper = [];
         foreach ($fonts as $code => $layer) {
             $fontObject = $this->buildFontObject($code, (string) $layer);
+            $fontObject->buildTables();
             dd($fontObject);
             // @todo implement work with fonts
             $mapper[$code] = [
@@ -206,10 +208,9 @@ class PDFObject
 
         $fontObject->encoding = $baseFontInfo['Encoding'];
         $fontObject->name = $descriptor['FontName'];
-
         $fontObject->flags = $descriptor['Flags'];
+        $fontObject->CIDSystemInfo = $font['CIDSystemInfo'] ?? null;
         $fontObject->composite = $composite;
-
         $fontObject->firstChar = $font['FirstChar'] ?? 0;
         $fontObject->lastChar = $font['LastChar'] ?? ($composite ? 0xFFFF : 0xFF);
 
@@ -220,12 +221,12 @@ class PDFObject
         if($fontFile && ($fontFile instanceof ElementXRef)) {
             $fontFile = $this->getObjectById((string) $fontFile);
         }
-        dd($fontFile);
-
-        dd($descriptor);
-
-        dd($font);
-
+        $fontFileObject = new FontFile();
+        $fontFileObject->stream = $fontFile[1];
+        $fontFileObject->length = $fontFile[0]['Length'] ?? null;
+        $fontFileObject->length1 = $fontFile[0]['Length1'] ?? null;
+        $fontFileObject->length2 = $fontFile[0]['Length2'] ?? null;
+        $fontFileObject->length3 = $fontFile[0]['Length3'] ?? null;
 
         return $fontObject;
     }
