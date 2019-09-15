@@ -13,13 +13,25 @@ class PDFFont
     public $type;
     public $flags;
     public $composite;
+    public $toUnicode;
     public $firstChar;
     public $lastChar;
     public $subType;
     public $tables = [];
+    public $init = [];
     public $fontInfo;
     public $fontFile;
     public $CIDSystemInfo = [];
+
+    // Unicode Private Use Areas:
+    const PRIVATE_USE_AREAS = [
+        [0xE000, 0xF8FF],     // BMP (0)
+        [0x100000, 0x10FFFD], // PUP (16)
+    ];
+
+    // PDF Glyph Space Units are one Thousandth of a TextSpace Unit
+    // except for Type 3 fonts
+    const PDF_GLYPH_SPACE_UNITS = 1000;
 
     const FontFlags = [
         'FixedPitch' => 1,
@@ -33,13 +45,53 @@ class PDFFont
         'ForceBold' => 262144,
     ];
 
+    const MacStandardGlyphOrdering = [
+    '.notdef', '.null', 'nonmarkingreturn', 'space', 'exclam', 'quotedbl',
+    'numbersign', 'dollar', 'percent', 'ampersand', 'quotesingle', 'parenleft',
+    'parenright', 'asterisk', 'plus', 'comma', 'hyphen', 'period', 'slash',
+    'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight',
+    'nine', 'colon', 'semicolon', 'less', 'equal', 'greater', 'question', 'at',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'bracketleft',
+    'backslash', 'bracketright', 'asciicircum', 'underscore', 'grave', 'a', 'b',
+    'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q',
+    'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'braceleft', 'bar', 'braceright',
+    'asciitilde', 'Adieresis', 'Aring', 'Ccedilla', 'Eacute', 'Ntilde',
+    'Odieresis', 'Udieresis', 'aacute', 'agrave', 'acircumflex', 'adieresis',
+    'atilde', 'aring', 'ccedilla', 'eacute', 'egrave', 'ecircumflex', 'edieresis',
+    'iacute', 'igrave', 'icircumflex', 'idieresis', 'ntilde', 'oacute', 'ograve',
+    'ocircumflex', 'odieresis', 'otilde', 'uacute', 'ugrave', 'ucircumflex',
+    'udieresis', 'dagger', 'degree', 'cent', 'sterling', 'section', 'bullet',
+    'paragraph', 'germandbls', 'registered', 'copyright', 'trademark', 'acute',
+    'dieresis', 'notequal', 'AE', 'Oslash', 'infinity', 'plusminus', 'lessequal',
+    'greaterequal', 'yen', 'mu', 'partialdiff', 'summation', 'product', 'pi',
+    'integral', 'ordfeminine', 'ordmasculine', 'Omega', 'ae', 'oslash',
+    'questiondown', 'exclamdown', 'logicalnot', 'radical', 'florin',
+    'approxequal', 'Delta', 'guillemotleft', 'guillemotright', 'ellipsis',
+    'nonbreakingspace', 'Agrave', 'Atilde', 'Otilde', 'OE', 'oe', 'endash',
+    'emdash', 'quotedblleft', 'quotedblright', 'quoteleft', 'quoteright',
+    'divide', 'lozenge', 'ydieresis', 'Ydieresis', 'fraction', 'currency',
+    'guilsinglleft', 'guilsinglright', 'fi', 'fl', 'daggerdbl', 'periodcentered',
+    'quotesinglbase', 'quotedblbase', 'perthousand', 'Acircumflex',
+    'Ecircumflex', 'Aacute', 'Edieresis', 'Egrave', 'Iacute', 'Icircumflex',
+    'Idieresis', 'Igrave', 'Oacute', 'Ocircumflex', 'apple', 'Ograve', 'Uacute',
+    'Ucircumflex', 'Ugrave', 'dotlessi', 'circumflex', 'tilde', 'macron',
+    'breve', 'dotaccent', 'ring', 'cedilla', 'hungarumlaut', 'ogonek', 'caron',
+    'Lslash', 'lslash', 'Scaron', 'scaron', 'Zcaron', 'zcaron', 'brokenbar',
+    'Eth', 'eth', 'Yacute', 'yacute', 'Thorn', 'thorn', 'minus', 'multiply',
+    'onesuperior', 'twosuperior', 'threesuperior', 'onehalf', 'onequarter',
+    'threequarters', 'franc', 'Gbreve', 'gbreve', 'Idotaccent', 'Scedilla',
+    'scedilla', 'Cacute', 'cacute', 'Ccaron', 'ccaron', 'dcroat'];
+
     public function buildTables()
     {
-        $this->tables['cmap'] = $this->buildCMapTable();
+        $initCMap = $this->initCMapTable();
+        $this->toUnicode = $initCMap['toUnicode'];
+        $this->init['init_cmap'] = $initCMap['cmap'];
 
     }
 
-    public function buildCMapTable()
+    public function initCMapTable()
     {
         if(!$this->composite) {
             return null;
@@ -65,8 +117,13 @@ class PDFFont
         }
 
         $this->defaultEncoding = $defaultEncoding;
-        $unicodeIdentityMap = $this->buildToUnicode();
-        return new CMap(false);
+        $toUnicode = $this->buildToUnicode();
+
+        return [
+            'toUnicode' => $toUnicode,
+            'cmap' => new CMap(false)
+
+        ];
     }
 
     private function buildToUnicode()
@@ -116,6 +173,20 @@ class PDFFont
             $baseEncodingName = null;
         }
         return $baseEncodingName;
+    }
+
+    public function isCorrectFontTypes()
+    {
+        // @todo implement check from file and from descriptor
+        return true;
+
+    }
+
+    public function checkAndRepair()
+    {
+        $fontFileData = new FontFileData($this);
+        dd($fontFileData);
+
     }
 
 }

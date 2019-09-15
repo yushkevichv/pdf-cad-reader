@@ -167,7 +167,6 @@ class PDFObject
         $mapper = [];
         foreach ($fonts as $code => $layer) {
             $fontObject = $this->buildFontObject($code, (string) $layer);
-            $fontObject->buildTables();
             dd($fontObject);
             // @todo implement work with fonts
             $mapper[$code] = [
@@ -206,6 +205,7 @@ class PDFObject
         $descriptor = $this->getObjectById((string) $font['FontDescriptor'])[0];
         // work with hash?
 
+        $fontObject->type = $font['Subtype'];
         $fontObject->encoding = $baseFontInfo['Encoding'];
         $fontObject->name = $descriptor['FontName'];
         $fontObject->flags = $descriptor['Flags'];
@@ -227,6 +227,20 @@ class PDFObject
         $fontFileObject->length1 = $fontFile[0]['Length1'] ?? null;
         $fontFileObject->length2 = $fontFile[0]['Length2'] ?? null;
         $fontFileObject->length3 = $fontFile[0]['Length3'] ?? null;
+
+        $fontObject->fontFile = $fontFileObject;
+
+
+        $fontObject->buildTables();
+
+        // @todo implement fallback fonts
+
+        if(!$fontObject->isCorrectFontTypes()) {
+            throw new \Exception('Inconsistent descriptor and font file');
+        }
+
+        $data = $fontObject->checkAndRepair();
+
 
         return $fontObject;
     }

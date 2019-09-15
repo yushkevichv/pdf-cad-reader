@@ -15,6 +15,4 @@ class IdentityCMap extends CMap
 
         $this->vertical = $vertical;
     }
-
-
 }
