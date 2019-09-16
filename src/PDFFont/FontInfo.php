@@ -8,7 +8,7 @@ class FontInfo
 {
     public $fontFamily;
     public $fontWeight;
-    public $FontBBox = [];
+    public $fontBBox = [];
     public $ascent;
     public $descent;
     public $leading;

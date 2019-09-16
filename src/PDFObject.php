@@ -45,6 +45,17 @@ class PDFObject
         }
     }
 
+    public function decodeText(string $fontCode, string $text) :string
+    {
+        $font = $this->index['mappers']['fonts'][$fontCode] ?? null;
+        if(!$font) {
+            throw new \Exception('Invalid font code');
+        }
+
+        dd($font['font']->decode($text));
+
+    }
+
     /**
      * @return PDFTrailer
      */
@@ -167,9 +178,6 @@ class PDFObject
         $mapper = [];
         foreach ($fonts as $code => $layer) {
             $fontObject = $this->buildFontObject($code, (string) $layer);
-            dd($fontObject->decode('<0244026802650011>'));
-            dd($fontObject->decode('<02450262026b026c0268025c>'));
-            // @todo implement work with fonts
             $mapper[$code] = [
                 'layer'      => (string) $layer,
                 'fontFamily' => 'Arial',
@@ -204,7 +212,6 @@ class PDFObject
         }
 
         $descriptor = $this->getObjectById((string) $font['FontDescriptor'])[0];
-        // work with hash?
 
         $fontObject->type = $font['Subtype'];
         $fontObject->encoding = $baseFontInfo['Encoding'];
@@ -212,8 +219,6 @@ class PDFObject
         $fontObject->flags = $descriptor['Flags'];
         $fontObject->CIDSystemInfo = $font['CIDSystemInfo'] ?? null;
         $fontObject->composite = $composite;
-        $fontObject->firstChar = $font['FirstChar'] ?? 0;
-        $fontObject->lastChar = $font['LastChar'] ?? ($composite ? 0xFFFF : 0xFF);
 
         $fontInfo = new FontInfo($descriptor);
         $fontObject->fontInfo = $fontInfo;
@@ -224,21 +229,8 @@ class PDFObject
         }
         $fontFileObject = new FontFile();
         $fontFileObject->stream = $fontFile[1];
-        $fontFileObject->length = $fontFile[0]['Length'] ?? null;
-        $fontFileObject->length1 = $fontFile[0]['Length1'] ?? null;
-        $fontFileObject->length2 = $fontFile[0]['Length2'] ?? null;
-        $fontFileObject->length3 = $fontFile[0]['Length3'] ?? null;
 
         $fontObject->fontFile = $fontFileObject;
-
-
-        $fontObject->buildTables();
-
-        // @todo implement fallback fonts
-
-        if(!$fontObject->isCorrectFontTypes()) {
-            throw new \Exception('Inconsistent descriptor and font file');
-        }
 
         $fontObject->buildFontFileData();
 
