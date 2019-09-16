@@ -178,7 +178,7 @@ class PDFObject
             $mapper[$code] = [
                 'layer'      => (string) $layer,
                 'fontFamily' => 'Arial',
-                'font'       => $fontObject
+                'font'       => $fontObject,
             ];
         }
 
@@ -229,8 +229,7 @@ class PDFObject
         $fontObject->fontFile = $fontFileObject;
 
         $fontObject->buildFontFileData();
-
-
+        
         return $fontObject;
     }
 
