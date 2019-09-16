@@ -3,6 +3,9 @@
 namespace Yushkevichv\PDFCadReader;
 
 use Exception;
+use Yushkevichv\PDFCadReader\PDFFont\FontFile;
+use Yushkevichv\PDFCadReader\PDFFont\FontInfo;
+use Yushkevichv\PDFCadReader\PDFFont\PDFFont;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementXRef;
 
 class PDFObject
@@ -11,6 +14,14 @@ class PDFObject
     protected $index = [];
     protected $streamData = [];
     protected $trailer;
+
+    public function __construct()
+    {
+        $this->objects = [];
+        $this->index = [];
+        $this->streamData = [];
+        $this->trailer = null;
+    }
 
     /**
      * @return array
@@ -25,12 +36,22 @@ class PDFObject
         return $this->streamData;
     }
 
-    public function setStreamData()
+    private function setStreamData()
     {
         $streamKeys = $this->index['mappers']['streams'];
         foreach ($streamKeys as $key => $stream) {
             $this->streamData[$key] = $this->getObjectById($stream)[1];
         }
+    }
+
+    public function decodeText(string $fontCode, string $text) :string
+    {
+        $font = $this->index['mappers']['fonts'][$fontCode] ?? null;
+        if (!$font) {
+            throw new \Exception('Invalid font code');
+        }
+
+        return $font['font']->decode($text);
     }
 
     /**
@@ -44,7 +65,7 @@ class PDFObject
     /**
      * @return string
      */
-    public function getRoot()
+    private function getRoot()
     {
         return (string) $this->getTrailer()->getRoot();
     }
@@ -84,18 +105,26 @@ class PDFObject
 
         $kids = $this->getKids((string) $pages['Kids'][0]);
 
-        $this->index['info']['width'] = ($kids['MediaBox'][2] - $kids['MediaBox'][0]);
-        $this->index['info']['height'] = ($kids['MediaBox'][3] - $kids['MediaBox'][1]);
-        $this->index['info']['rotate'] = (int) $kids['Rotate'];
-        $this->index['mappers']['layers'] = $this->getLayersMapper($kids['Resources']['Properties']);
+        $this->index['info']['width'] = ($kids['MediaBox'][2] - $kids['MediaBox'][0]) ?? 0;
+        $this->index['info']['height'] = ($kids['MediaBox'][3] - $kids['MediaBox'][1]) ?? 0;
+        if (isset($kids['Rotate']) && array_key_exists('Rotate', $kids)) {
+            $this->index['info']['rotate'] = (int) $kids['Rotate'];
+        } else {
+            $this->index['info']['rotate'] = 0;
+        }
+
+        if (count($kids['Contents']) > 1) {
+            $this->index['mappers']['layers'] = $this->getLayersMapper($kids['Resources']['Properties']);
+            $this->index['mappers']['fonts'] = $this->getFontMapper($kids['Resources']['Font']);
+            $this->index['layers'] = $this->getLayers($root);
+        }
+
         $this->index['mappers']['streams'] = array_values($this->getLayersMapper($kids['Contents']));
-        $this->index['mappers']['fonts'] = $this->getFontMapper($kids['Resources']['Font']);
-        $this->index['layers'] = $this->getLayers($root);
 
         $this->setStreamData();
     }
 
-    protected function getKids($key)
+    private function getKids($key)
     {
         $kids = $this->getObjectById($key)[0];
         if (isset($kids['Kids']) && array_key_exists('Kids', $kids) && isset($kids['Kids'][0])) {
@@ -126,7 +155,7 @@ class PDFObject
      *
      * @return array
      */
-    protected function getLayersMapper($layers): array
+    private function getLayersMapper($layers): array
     {
         $mapper = [];
         foreach ($layers as $code => $layer) {
@@ -141,18 +170,67 @@ class PDFObject
      *
      * @return array
      */
-    protected function getFontMapper(array $fonts): array
+    private function getFontMapper(array $fonts): array
     {
         $mapper = [];
         foreach ($fonts as $code => $layer) {
-            // @todo implement work with fonts
+            $fontObject = $this->buildFontObject($code, (string) $layer);
             $mapper[$code] = [
                 'layer'      => (string) $layer,
                 'fontFamily' => 'Arial',
+                'font'       => $fontObject,
             ];
         }
 
         return $mapper;
+    }
+
+    private function buildFontObject($fontCode, string $layer) :PDFFont
+    {
+        $fontObject = new PDFFont();
+        $fontObject->code = $fontCode;
+        $font = $baseFontInfo = $this->getObjectById($layer)[0];
+        $composite = false;
+
+        $fontObject->subType = $font['Subtype'];
+        if ($fontObject->subType == 'Type0') {
+            // If font is a composite
+            //  - get the descendant font
+            //  - set the type according to the descendant font
+            //  - get the FontDescriptor from the descendant font
+
+            if (is_array($font['DescendantFonts'])) {
+                $font = $font['DescendantFonts'][0];
+            } else {
+                $font = $font['DescendantFonts'];
+            }
+            $composite = true;
+        }
+
+        $descriptor = $this->getObjectById((string) $font['FontDescriptor'])[0];
+
+        $fontObject->type = $font['Subtype'];
+        $fontObject->encoding = $baseFontInfo['Encoding'];
+        $fontObject->name = $descriptor['FontName'];
+        $fontObject->flags = $descriptor['Flags'];
+        $fontObject->CIDSystemInfo = $font['CIDSystemInfo'] ?? null;
+        $fontObject->composite = $composite;
+
+        $fontInfo = new FontInfo($descriptor);
+        $fontObject->fontInfo = $fontInfo;
+
+        $fontFile = $descriptor['FontFile'] ?? $descriptor['FontFile2'] ?? $descriptor['FontFile3'] ?? null;
+        if ($fontFile && ($fontFile instanceof ElementXRef)) {
+            $fontFile = $this->getObjectById((string) $fontFile);
+        }
+        $fontFileObject = new FontFile();
+        $fontFileObject->stream = $fontFile[1];
+
+        $fontObject->fontFile = $fontFileObject;
+
+        $fontObject->buildFontFileData();
+
+        return $fontObject;
     }
 
     /**
@@ -162,7 +240,7 @@ class PDFObject
      *
      * @return array
      */
-    protected function getLayers(array $root): array
+    private function getLayers(array $root): array
     {
         $ocProperties = $root['OCProperties'];
         if ($ocProperties instanceof ElementXRef) {

@@ -23,6 +23,9 @@ $pdfObject->getIndex();
 
 // get array of decodedd streams
 $pdfObject->getStreamData();
+
+// decode text from stream
+$pdfObject->decodeText('F1', '<02450262026b026c0268025c>');
 ```
 
 ### Structure of PDFObject Index ###
@@ -45,7 +48,31 @@ $pdfObject->getStreamData();
         'fonts' => [
             'fontCode' => [
                 'layer',
-                'fontFamily'
+                'fontFamily',
+                'font' => [
+                    'code',
+                    'name',
+                    'encoding',
+                    'type',
+                    'flags',
+                    'composite',
+                    'subType',
+                    'fontInfo' => [
+                        'fontFamily',
+                        'fontWeight',
+                        'fontBox' => [],
+                        'ascent',
+                        'descent',
+                        'leading',
+                        'capHeight'
+                    ],
+                    'glyphIndexArray' => [],
+    '               'CIDSystemInfo' => [
+                        'Registry',
+                        'Ordering',
+                        'Supplement'
+                    ]
+                ]
             ]   
         ]
     ],
