@@ -7,7 +7,6 @@ use Yushkevichv\PDFCadReader\PDFObject;
 use Yushkevichv\PDFCadReader\PDFObjectElement\ElementXRef;
 use Yushkevichv\PDFCadReader\PDFTrailer;
 
-
 class PDFObjectTest extends BaseTestCase
 {
     public function testGetObjectById()
