@@ -229,7 +229,7 @@ class PDFObject
         $fontObject->fontFile = $fontFileObject;
 
         $fontObject->buildFontFileData();
-        
+
         return $fontObject;
     }
 
