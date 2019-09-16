@@ -1,4 +1,5 @@
 <?php
+
 namespace Yushkevichv\PDFCadReader\PDFFont;
 
 use FontLib\Font;
@@ -22,13 +23,13 @@ class PDFFont
         $tmpFileName = 'font_'.$this->code.'_'.time().'.tiff';
         $dirPath = __DIR__.'/../../tmp_storage/';
 
-        if(!file_exists($dirPath)) {
+        if (!file_exists($dirPath)) {
             mkdir($dirPath, 0777);
         }
 
         file_put_contents($dirPath.$tmpFileName, $this->fontFile->stream);
         $fontFileData = Font::load($dirPath.$tmpFileName);
-        if($fontFileData) {
+        if ($fontFileData) {
             $this->glyphIndexArray = array_flip($fontFileData->getUnicodeCharMap());
         }
         unlink($dirPath.$tmpFileName);
@@ -38,13 +39,13 @@ class PDFFont
 
     public function decode($str) :string
     {
-        preg_match("#([<](.*)[>])#", $str, $parts);
-        if($parts) {
-           $str = $parts[2];
+        preg_match('#([<](.*)[>])#', $str, $parts);
+        if ($parts) {
+            $str = $parts[2];
         }
 
         $glyphIndexArray = $this->glyphIndexArray;
-        if(!$glyphIndexArray) {
+        if (!$glyphIndexArray) {
             // @todo check implementation for font without addditional glyphs
             return $str;
         }

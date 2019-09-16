@@ -5,9 +5,8 @@ namespace Yushkevichv\PDFCadReader;
 use Exception;
 use Yushkevichv\PDFCadReader\PDFFont\FontFile;
 use Yushkevichv\PDFCadReader\PDFFont\FontInfo;
-use Yushkevichv\PDFCadReader\PDFObjectElement\ElementXRef;
 use Yushkevichv\PDFCadReader\PDFFont\PDFFont;
-
+use Yushkevichv\PDFCadReader\PDFObjectElement\ElementXRef;
 
 class PDFObject
 {
@@ -48,12 +47,11 @@ class PDFObject
     public function decodeText(string $fontCode, string $text) :string
     {
         $font = $this->index['mappers']['fonts'][$fontCode] ?? null;
-        if(!$font) {
+        if (!$font) {
             throw new \Exception('Invalid font code');
         }
 
-        dd($font['font']->decode($text));
-
+        return $font['font']->decode($text);
     }
 
     /**
@@ -174,14 +172,13 @@ class PDFObject
      */
     private function getFontMapper(array $fonts): array
     {
-
         $mapper = [];
         foreach ($fonts as $code => $layer) {
             $fontObject = $this->buildFontObject($code, (string) $layer);
             $mapper[$code] = [
                 'layer'      => (string) $layer,
                 'fontFamily' => 'Arial',
-                'font' => $fontObject
+                'font'       => $fontObject
             ];
         }
 
@@ -196,16 +193,15 @@ class PDFObject
         $composite = false;
 
         $fontObject->subType = $font['Subtype'];
-        if($fontObject->subType == 'Type0') {
+        if ($fontObject->subType == 'Type0') {
             // If font is a composite
             //  - get the descendant font
             //  - set the type according to the descendant font
             //  - get the FontDescriptor from the descendant font
 
-            if(is_array($font['DescendantFonts'])) {
+            if (is_array($font['DescendantFonts'])) {
                 $font = $font['DescendantFonts'][0];
-            }
-            else {
+            } else {
                 $font = $font['DescendantFonts'];
             }
             $composite = true;
@@ -224,7 +220,7 @@ class PDFObject
         $fontObject->fontInfo = $fontInfo;
 
         $fontFile = $descriptor['FontFile'] ?? $descriptor['FontFile2'] ?? $descriptor['FontFile3'] ?? null;
-        if($fontFile && ($fontFile instanceof ElementXRef)) {
+        if ($fontFile && ($fontFile instanceof ElementXRef)) {
             $fontFile = $this->getObjectById((string) $fontFile);
         }
         $fontFileObject = new FontFile();

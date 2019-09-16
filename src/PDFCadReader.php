@@ -26,5 +26,4 @@ class PDFCadReader
 
         return $parser->parseContent(new \TCPDF_PARSER(ltrim($content)));
     }
-
 }
