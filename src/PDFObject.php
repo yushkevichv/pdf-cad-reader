@@ -243,16 +243,21 @@ class PDFObject
     private function getLayers(array $root): array
     {
         $ocProperties = $root['OCProperties'] ?? null;
-        if (!$ocProperties) {
-            return array_flip($this->index['mappers']['layers']);
+        $mapper = [];
+
+        if(!$ocProperties) {
+            $layers = array_flip($this->index['mappers']['layers']);
+            foreach ($layers as $code => $layerName) {
+                $mapper[$code] = $this->getObjectById($code)[0]['Name'] ?? $layerName;
+            }
+            return $mapper;
         }
+
         if ($ocProperties instanceof ElementXRef) {
             $layers = $this->getObjectById((string) $root['OCProperties'])[0]['D']['Order'];
         } else {
             $layers = $root['OCProperties']['D']['Order'];
         }
-
-        $mapper = [];
 
         foreach ($layers as $code => $layer) {
             $mapper[(string) $layer] = $this->getObjectById((string) $layer)[0]['Name'];
