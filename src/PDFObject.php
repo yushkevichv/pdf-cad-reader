@@ -113,7 +113,7 @@ class PDFObject
             $this->index['info']['rotate'] = 0;
         }
 
-        if (count($kids['Contents']) > 1) {
+        if (($kids['Contents'] instanceof ElementXRef) || (is_array($kids['Contents']) && count($kids['Contents']) > 1)) {
             $this->index['mappers']['layers'] = $this->getLayersMapper($kids['Resources']['Properties']);
             $this->index['mappers']['fonts'] = $this->getFontMapper($kids['Resources']['Font']);
             $this->index['layers'] = $this->getLayers($root);
@@ -242,7 +242,10 @@ class PDFObject
      */
     private function getLayers(array $root): array
     {
-        $ocProperties = $root['OCProperties'];
+        $ocProperties = $root['OCProperties'] ?? null;
+        if(!$ocProperties) {
+            return array_flip($this->index['mappers']['layers']);
+        }
         if ($ocProperties instanceof ElementXRef) {
             $layers = $this->getObjectById((string) $root['OCProperties'])[0]['D']['Order'];
         } else {
