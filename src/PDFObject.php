@@ -243,7 +243,7 @@ class PDFObject
     private function getLayers(array $root): array
     {
         $ocProperties = $root['OCProperties'] ?? null;
-        if(!$ocProperties) {
+        if (!$ocProperties) {
             return array_flip($this->index['mappers']['layers']);
         }
         if ($ocProperties instanceof ElementXRef) {

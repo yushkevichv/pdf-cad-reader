@@ -55,7 +55,7 @@ class PDFFont
         foreach ($chars as $char) {
             $charCode = hexdec($char);
             $glyph = $glyphIndexArray[$charCode] ?? null;
-            if($glyph) {
+            if ($glyph) {
                 $text .= html_entity_decode("&#{$glyphIndexArray[$charCode]};") ?? '';
             }
         }
