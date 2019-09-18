@@ -250,6 +250,7 @@ class PDFObject
             foreach ($layers as $code => $layerName) {
                 $mapper[$code] = $this->getObjectById($code)[0]['Name'] ?? $layerName;
             }
+            
             return $mapper;
         }
 
