@@ -245,7 +245,7 @@ class PDFObject
         $ocProperties = $root['OCProperties'] ?? null;
         $mapper = [];
 
-        if(!$ocProperties) {
+        if (!$ocProperties) {
             $layers = array_flip($this->index['mappers']['layers']);
             foreach ($layers as $code => $layerName) {
                 $mapper[$code] = $this->getObjectById($code)[0]['Name'] ?? $layerName;
