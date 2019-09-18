@@ -19,7 +19,7 @@ class FontInfo
         $this->fontBBox = $descriptor['FontBBox'];
         $this->ascent = $descriptor['Ascent'];
         $this->descent = $descriptor['Descent'];
-        $this->leading = $descriptor['Leading'];
+        $this->leading = $descriptor['Leading'] ?? null;
         $this->capHeight = $descriptor['CapHeight'];
     }
 }
